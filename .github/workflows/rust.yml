@@ -40,7 +40,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@2.32.0
         with:
-          php-version: '8.3'
+          php-version: '8.4'
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: cargo build --release
