@@ -26,10 +26,10 @@ jobs:
           - os: ubuntu-latest
             arch: aarch64
             target: aarch64-unknown-linux-gnu
-          - os: macos-15
+          - os: macos-latest
             arch: x86_64
             target: x86_64-apple-darwin
-          - os: windows-2022
+          - os: windows-latest
             arch: x86_64
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
