@@ -53,30 +53,33 @@ pub fn tg_decrypt_ige(cipher: Binary<u8>, key: Binary<u8>, iv: Binary<u8>) -> Re
 }
 
 
-#[php_function]
-pub fn tg_new_ctr(init: Vec<u8>) -> PhpResult<ResourceId> {
-    if init.len() != 64 {
-        return Err(PhpError::InvalidArgument("init must be 64 bytes".into()));
+#[php_class(name = "AesCtr")]
+pub struct AesCtr {
+    inner: grammers_crypto::ObfuscatedCipher,
+}
+
+#[php_class_methods]
+impl AesCtr {
+    #[php_constructor]
+    pub fn __construct(init: Vec<u8>) -> PhpResult<Self> {
+        let mut buf = [0u8; 64];
+        buf.copy_from_slice(&init);
+        Ok(AesCtr {
+            inner: grammers_crypto::ObfuscatedCipher::new(&buf),
+        })
     }
-    let mut buf = [0u8; 64];
-    buf.copy_from_slice(&init);
-    let cipher = grammers_crypto::ObfuscatedCipher::new(&buf);
-    let rid = flags::DataType::Resource::builder().build(cipher)?;
-    Ok(rid)
-}
 
-#[php_function]
-pub fn tg_encrypt_ctr(rid: ResourceId, mut data: Vec<u8>) -> PhpResult<Vec<u8>> {
-    let mut cipher: &mut ObfuscatedCipher = flags::DataType::Resource::get_mut(rid)?;
-    cipher.encrypt(&mut data);
-    Ok(data)
-}
+    #[php_function(name = "encrypt")]
+    pub fn encrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
+        self.inner.encrypt(&mut data);
+        data
+    }
 
-#[php_function]
-pub fn tg_decrypt_ctr(rid: ResourceId, mut data: Vec<u8>) -> PhpResult<Vec<u8>> {
-    let mut cipher: &mut ObfuscatedCipher = flags::DataType::Resource::get_mut(rid)?;
-    cipher.decrypt(&mut data);
-    Ok(data)
+    #[php_function(name = "decrypt")]
+    pub fn decrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
+        self.inner.decrypt(&mut data);
+        data
+    }
 }
 
 #[php_module]
