@@ -3,6 +3,7 @@
 use ext_php_rs::prelude::*;
 use ext_php_rs::binary::Binary;
 use std::collections::HashMap;
+use grammers_crypto::obfuscated::ObfuscatedCipher;
 
 #[php_const]
 pub const TGCRYPTO_VERSION: &str = "0.0.1";
@@ -55,7 +56,7 @@ pub fn tg_decrypt_ige(cipher: Binary<u8>, key: Binary<u8>, iv: Binary<u8>) -> Re
 
 #[php_class(name = "AesCtr")]            // ⟵ Register AesCtr with PHP
 pub struct AesCtr {
-    inner: grammers_crypto::obfuscated::ObfuscatedCipher,
+    inner: ObfuscatedCipher,
 }
 
 /// Export **this impl block** to PHP
@@ -69,7 +70,7 @@ impl AesCtr {
         let mut buf = [0u8; 64];
         buf.copy_from_slice(&init);
         Ok(AesCtr {
-            inner: grammers_crypto::obfuscated::ObfuscatedCipher::new(&buf),
+            inner: ObfuscatedCipher::new(&buf),
         })
     }
 
