@@ -4,6 +4,10 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::binary::Binary;
 use std::collections::HashMap;
 
+
+use grammers_crypto::ObfuscatedCipher as RustObfCipher;
+
+
 #[php_const]
 pub const TGCRYPTO_VERSION: &str = "0.0.1";
 
@@ -53,29 +57,40 @@ pub fn tg_decrypt_ige(cipher: Binary<u8>, key: Binary<u8>, iv: Binary<u8>) -> Re
 }
 
 
-#[php_class(name = "AesCtr")]
+#[php_class(name = "AesCtr")]            // ⟵ Register AesCtr with PHP
 pub struct AesCtr {
-    inner: grammers_crypto::ObfuscatedCipher,
+    inner: RustObfCipher,
 }
 
-#[php_class_methods]
+/// Export **this impl block** to PHP
+#[php_impl]                              // ⟵ Exports methods below
 impl AesCtr {
-    #[php_constructor]
-    pub fn __construct(init: Vec<u8>) -> PhpResult<Self> {
+    /// __construct(string $init_bytes)
+    ///
+    /// @param string $init A 64-byte initialization vector
+    #[php_constructor]                    // ⟵ Marks this method as PHP’s __construct
+    pub fn new(init: Vec<u8>) -> PhpResult<Self> {
+        if init.len() != 64 {
+            return Err(PhpError::InvalidArgument(
+                "init must be exactly 64 bytes".into(),
+            ));
+        }
         let mut buf = [0u8; 64];
         buf.copy_from_slice(&init);
         Ok(AesCtr {
-            inner: grammers_crypto::ObfuscatedCipher::new(&buf),
+            inner: RustObfCipher::new(&buf),
         })
     }
 
-    #[php_function(name = "encrypt")]
+    /// encrypt(string $data): string
+    #[php_method]                         // ⟵ Exports as an instance method
     pub fn encrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
         self.inner.encrypt(&mut data);
         data
     }
 
-    #[php_function(name = "decrypt")]
+    /// decrypt(string $data): string
+    #[php_method]                         // ⟵ Exports as an instance method
     pub fn decrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
         self.inner.decrypt(&mut data);
         data
