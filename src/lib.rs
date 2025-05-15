@@ -62,26 +62,30 @@ pub struct ObfuscatedCipher {
 #[php_impl]
 impl ObfuscatedCipher {
     #[php_constructor]
-    pub fn new(init: &[u8; 64]) -> PhpResult<Self> {
-        let init_rev = init.iter().copied().rev().collect::<Vec<_>>();
-        Self {
+    pub fn new(init: Vec<u8>) -> PhpResult<Self> {
+        let mut buf = [0u8; 64];
+        buf.copy_from_slice(&init);
+        let buf_rev = buf.iter().copied().rev().collect::<Vec<_>>();
+        Ok(Self {
             rx: ctr::Ctr128BE::<aes::Aes256>::new(
-                GenericArray::from_slice(&init_rev[8..40]),
-                GenericArray::from_slice(&init_rev[40..56]),
+                GenericArray::from_slice(&buf_rev[8..40]),
+                GenericArray::from_slice(&buf_rev[40..56]),
             ),
             tx: ctr::Ctr128BE::<aes::Aes256>::new(
-                GenericArray::from_slice(&init[8..40]),
-                GenericArray::from_slice(&init[40..56]),
+                GenericArray::from_slice(&buf[8..40]),
+                GenericArray::from_slice(&buf[40..56]),
             ),
-        }
+        })
     }
     #[php_method]
-    pub fn encrypt(&mut self, buffer: &mut [u8]) -> Vec<u8> {
-        self.tx.apply_keystream(buffer);
+    pub fn encrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
+        self.tx.apply_keystream(&mut data);
+        data
     }
     #[php_method]
-    pub fn decrypt(&mut self, buffer: &mut [u8]) -> Vec<u8> {
-        self.rx.apply_keystream(buffer);
+    pub fn decrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
+        self.rx.apply_keystream(&mut data);
+        data
     }
 }
 
