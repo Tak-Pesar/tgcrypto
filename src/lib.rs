@@ -4,10 +4,6 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::binary::Binary;
 use std::collections::HashMap;
 
-
-use grammers_crypto::ObfuscatedCipher as RustObfCipher;
-
-
 #[php_const]
 pub const TGCRYPTO_VERSION: &str = "0.0.1";
 
@@ -59,7 +55,7 @@ pub fn tg_decrypt_ige(cipher: Binary<u8>, key: Binary<u8>, iv: Binary<u8>) -> Re
 
 #[php_class(name = "AesCtr")]            // ⟵ Register AesCtr with PHP
 pub struct AesCtr {
-    inner: RustObfCipher,
+    inner: grammers_crypto::obfuscated::ObfuscatedCipher,
 }
 
 /// Export **this impl block** to PHP
@@ -70,15 +66,10 @@ impl AesCtr {
     /// @param string $init A 64-byte initialization vector
     #[php_constructor]                    // ⟵ Marks this method as PHP’s __construct
     pub fn new(init: Vec<u8>) -> PhpResult<Self> {
-        if init.len() != 64 {
-            return Err(PhpError::InvalidArgument(
-                "init must be exactly 64 bytes".into(),
-            ));
-        }
         let mut buf = [0u8; 64];
         buf.copy_from_slice(&init);
         Ok(AesCtr {
-            inner: RustObfCipher::new(&buf),
+            inner: grammers_crypto::obfuscated::ObfuscatedCipher::new(&buf),
         })
     }
 
