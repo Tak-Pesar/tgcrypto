@@ -3,7 +3,7 @@
 use ext_php_rs::prelude::*;
 use ext_php_rs::binary::Binary;
 use std::collections::HashMap;
-use grammers_crypto::obfuscated::ObfuscatedCipher;
+use aes::cipher::{KeyIvInit, StreamCipher, generic_array::GenericArray};
 
 #[php_const]
 pub const TGCRYPTO_VERSION: &str = "0.0.1";
@@ -53,39 +53,35 @@ pub fn tg_decrypt_ige(cipher: Binary<u8>, key: Binary<u8>, iv: Binary<u8>) -> Re
     Ok(grammers_crypto::hex::to_hex(&plain))
 }
 
-
-#[php_class(name = "AesCtr")]            // ⟵ Register AesCtr with PHP
-pub struct AesCtr {
-    inner: ObfuscatedCipher,
+#[php_class(name = "ObfuscatedCipher")]
+pub struct ObfuscatedCipher {
+    rx: ctr::Ctr128BE<aes::Aes256>,
+    tx: ctr::Ctr128BE<aes::Aes256>,
 }
 
-/// Export **this impl block** to PHP
-#[php_impl]                              // ⟵ Exports methods below
-impl AesCtr {
-    /// __construct(string $init_bytes)
-    ///
-    /// @param string $init A 64-byte initialization vector
-    #[php_constructor]                    // ⟵ Marks this method as PHP’s __construct
-    pub fn new(init: Vec<u8>) -> PhpResult<Self> {
-        let mut buf = [0u8; 64];
-        buf.copy_from_slice(&init);
-        Ok(AesCtr {
-            inner: ObfuscatedCipher::new(&buf),
-        })
+#[php_impl]
+impl ObfuscatedCipher {
+    #[php_constructor]
+    pub fn new(init: &[u8; 64]) -> PhpResult<Self> {
+        let init_rev = init.iter().copied().rev().collect::<Vec<_>>();
+        Self {
+            rx: ctr::Ctr128BE::<aes::Aes256>::new(
+                GenericArray::from_slice(&init_rev[8..40]),
+                GenericArray::from_slice(&init_rev[40..56]),
+            ),
+            tx: ctr::Ctr128BE::<aes::Aes256>::new(
+                GenericArray::from_slice(&init[8..40]),
+                GenericArray::from_slice(&init[40..56]),
+            ),
+        }
     }
-
-    /// encrypt(string $data): string
-    #[php_method]                         // ⟵ Exports as an instance method
-    pub fn encrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
-        self.inner.encrypt(&mut data);
-        data
+    #[php_method]
+    pub fn encrypt(&mut self, buffer: &mut [u8]) -> Vec<u8> {
+        self.tx.apply_keystream(buffer);
     }
-
-    /// decrypt(string $data): string
-    #[php_method]                         // ⟵ Exports as an instance method
-    pub fn decrypt(&mut self, mut data: Vec<u8>) -> Vec<u8> {
-        self.inner.decrypt(&mut data);
-        data
+    #[php_method]
+    pub fn decrypt(&mut self, buffer: &mut [u8]) -> Vec<u8> {
+        self.rx.apply_keystream(buffer);
     }
 }
 
