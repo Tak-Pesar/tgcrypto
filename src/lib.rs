@@ -3,7 +3,8 @@
 use ext_php_rs::prelude::*;
 use ext_php_rs::binary::Binary;
 use std::collections::HashMap;
-use aes::cipher::{KeyIvInit, StreamCipher, generic_array::GenericArray};
+
+// use aes::cipher::{KeyIvInit, StreamCipher, generic_array::GenericArray};
 
 #[php_const]
 pub const TGCRYPTO_VERSION: &str = "0.0.1";
@@ -53,6 +54,7 @@ pub fn tg_decrypt_ige(cipher: Binary<u8>, key: Binary<u8>, iv: Binary<u8>) -> Re
     Ok(grammers_crypto::hex::to_hex(&plain))
 }
 
+/*
 #[php_class(name = "ObfuscatedCipher")]
 pub struct ObfuscatedCipher {
     rx: ctr::Ctr128BE<aes::Aes256>,
@@ -88,6 +90,7 @@ impl ObfuscatedCipher {
         data
     }
 }
+*/
 
 #[php_module]
 pub fn module(module: ModuleBuilder) -> ModuleBuilder {
