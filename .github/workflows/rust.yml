@@ -16,6 +16,7 @@ jobs:
   build:
     strategy:
       matrix:
+        php-version: ['8.0', '8.1', '8.2', '8.3', '8.4']
         include:
           - os: ubuntu-latest
             arch: x86_64
@@ -37,10 +38,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up PHP
+      - name: Setup PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@2.32.0
         with:
-          php-version: '8.4.4'
+          php-version: ${{ matrix.php-version }}
 
       - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
         run: cargo build --release
@@ -117,7 +118,5 @@ jobs:
         with:
           tag_name: "v${{ steps.set_tag.outputs.version }}"
           files: artifacts/*.zip
-
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
