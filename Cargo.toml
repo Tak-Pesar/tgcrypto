@@ -1,6 +1,6 @@
 [package]
 name = "tgcrypto"
-version = "0.0.2"
+version = "0.0.1"
 edition = "2024"
 description = "A PHP extension for cryptographic functions using Rust"
 license = "GNU General Public License v3.0"
@@ -22,4 +22,5 @@ grammers-crypto = "0.7"
 lto = true # Enable Link-Time Optimization for better performance
 codegen-units = 1 # Optimize for binary size
 opt-level = "z" # Optimize for size
+
 
